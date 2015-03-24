@@ -19,7 +19,7 @@ def get_gpio():
 	return dbus.Interface(obj, DBUS_BUS_NAME)
 
 def main():	
-	if len(sys.argv) < 1:
+	if len(sys.argv) < 2:
 		print("Choose one of this port: ", get_gpio().ls())
 	for i in range(1, len(sys.argv)):
 		pin = get_pin(sys.argv[i])
