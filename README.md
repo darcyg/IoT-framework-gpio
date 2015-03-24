@@ -34,7 +34,10 @@ This program turns LED on/off when on a button click.
 ```bash
 gpio-switch BUTTON_PIN LED_PIN
 ```
-Where PIN# is one of pins on the device connected to LEDs. 
+Where PIN# is one of pins on the device connected to LEDs. To list all available pins run app without parameters:
+```bash
+gpio-blink
+```
 
 Example:
 ```bash
