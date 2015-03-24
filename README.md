@@ -25,3 +25,19 @@ Example:
 ```bash
 gpio-blink.devicehive-gpio PIN9 PIN10 PIN11 PIN12 PIN13 PIN14 PIN15 PIN16
 ```
+
+
+#### GPIO Switch
+
+This program turns LED on/off when on a switch click.
+
+```bash
+gpio-switch SWITCH_PIN LED_PIN
+```
+Where PIN# is one of pins on the device connected to LEDs. 
+
+Example:
+```bash
+gpio-blink.devicehive-gpio PIN9 PIN10
+```
+
