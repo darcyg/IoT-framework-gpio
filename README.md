@@ -7,7 +7,7 @@ snappy build .
 ```
 
 
-### How to use
+### Usage Examples
 
 #### GPIO Blink
 
@@ -50,5 +50,11 @@ This program uses 2 buttons to control a set of LEDs. One of the LEDs is turned 
 gpio-click
 ```
 
-> It is important to connect LEDs and buttons to specific pins for this example.
+> It is important to connect LEDs and buttons to specific pins for this example. For BBB use 
+> Buttons: GPIO_66, GPIO_67
+> LEDS: GPIO_69, GPIO_68, GPIO_45, GPIO_44, GPIO_23, GPIO_26, GPIO_47, GPIO_46
+
+## Device Profiles
+
+As GPIO pinout is different on every device/board and there is no way to enumerate available pins programatically. So gpio daemon uses pin mapping for each device. Mappings are located in `/etc/gpio.yaml` file.  Each profile is mapped to the name returned by `/sys/firmware/devicetree/base/model` on the current system.
 
