@@ -1,0 +1,48 @@
+#!/usr/bin/python3
+
+#Python GPIO to DBUS simple client switch
+
+import dbus
+import time
+import sys
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GObject
+
+DBUS_BUS_NAME = "com.devicehive"
+
+def pin_value_changed(port, value):
+	global pin_out
+	print("pin_value_changed port: {} value: {}".format(port, value))
+	pin_out.set_value(str(int(value)^1))
+
+def get_pin(pin, mode):
+	bus = dbus.SystemBus()
+	obj = bus.get_object(DBUS_BUS_NAME, "/gpio/{}".format(pin))
+	pin = dbus.Interface(obj, DBUS_BUS_NAME)
+	pin.init(mode)
+	return pin
+
+def main():
+	global pin_out
+	if len(sys.argv) < 3:
+		print("specify in and out pins")
+		return
+
+	inport = sys.argv[1]
+	outport = sys.argv[2]
+
+	DBusGMainLoop(set_as_default=True)
+
+	pin_in = get_pin(inport, "both")
+	pin_in.connect_to_signal("pin_value_changed", pin_value_changed)
+	pin_out = get_pin(outport, "out")
+
+	try:
+		GObject.MainLoop().run()
+	except KeyboardInterrupt:
+		pass
+	pin_in.deinit()
+	pin_out.deinit()
+
+if __name__ == "__main__":
+	main()

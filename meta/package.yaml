@@ -1,0 +1,23 @@
+name: devicehive-gpio
+version: 1.0.0
+type: framework
+vendor: Nikolay Khabarov <Nikolay.Khabarov@dataart.com>
+icon: meta/dh.png
+architecture: [amd64, armhf, i386]
+integration:
+    devicehive-gpio-service:
+        apparmor-profile: meta/devicehive-gpio.apparmor
+    gpio-blink:
+        apparmor-profile: meta/devicehive-gpio.apparmor
+    gpio-switch:
+        apparmor-profile: meta/devicehive-gpio.apparmor
+    gpio-click:
+        apparmor-profile: meta/devicehive-gpio.apparmor
+services:
+    - name: devicehive-gpio-service
+      description: "Service for BLE DeviceHive gateway"
+      start: bin/gpio-daemon
+binaries:
+    - name: bin/gpio-blink
+    - name: bin/gpio-switch
+    - name: bin/gpio-click

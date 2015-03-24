@@ -1,0 +1,153 @@
+#!/usr/bin/python3
+
+#Python GPIO to DBUS Gateway
+
+import time
+import dbus.service
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GObject
+import threading
+import select
+import os
+import yaml
+
+DBUS_BUS_NAME = "com.devicehive"
+DBUS_BUS_PATH = "/gpio"
+
+class GPIOPinService(dbus.service.Object):
+	def __init__(self, pin, port):
+		self.m_service_path = "{}/{}".format(DBUS_BUS_PATH, pin)
+		self.m_port = port
+		self.m_poll_thread = None
+		self.m_poll_flag = False
+		self.m_pin = pin
+		self.m_gpio_port_path = "/sys/class/gpio/gpio{}".format(self.m_port)
+		self.m_gpio_port_path_value = os.path.join(self.m_gpio_port_path, "value")
+		bus_name = dbus.service.BusName(DBUS_BUS_NAME, dbus.SystemBus())
+		dbus.service.Object.__init__(self, bus_name, self.m_service_path)
+
+	# send when pin state changed
+	@dbus.service.signal(DBUS_BUS_NAME)
+	def pin_value_changed(self, port, value):
+		pass
+
+	# pin state poller
+	def poller(self):
+		watcher = open(self.m_gpio_port_path_value, "r")
+		poller = select.poll()
+		poller.register(watcher, select.POLLPRI or select.POLLERR or select.POLLIN)
+		laststate = watcher.read(1)
+		while self.m_poll_flag:
+			# TODO remove wait cycle and exit with deinit and re-init
+			pollresult = poller.poll(1000)
+			if not pollresult:
+				continue
+			watcher.seek(0)
+			state = watcher.read(1)
+			print("stata: ", state)
+			if state == "1" or state == "0":
+				if state != laststate:
+					laststate = state
+					self.pin_value_changed(self.m_pin, state)
+		poller.unregister(watcher)
+		watcher.close()
+
+	# init pin
+	@dbus.service.method(DBUS_BUS_NAME)
+	def init(self, mode):
+		# mode can be out, in, rising, falling or both
+		if os.path.isdir(self.m_gpio_port_path):
+			self.deinit()
+		with open("/sys/class/gpio/export", 'w') as fi:
+			fi.write(self.m_port)
+		if mode == "out":
+			with open(os.path.join(self.m_gpio_port_path, "direction"), "w") as fi:
+				fi.write("out")
+		else:
+			with open(os.path.join(self.m_gpio_port_path, "direction"), "w") as fi:
+				fi.write("in")
+			if mode != "in":
+				with open(os.path.join(self.m_gpio_port_path, "edge"), "w") as fi:
+					fi.write(mode)
+				self.m_poll_flag = True
+				self.m_poll_thread = threading.Thread(target=self.poller)
+				self.m_poll_thread.start()
+			else:
+				with open(os.path.join(self.m_gpio_port_path, "edge"), "w") as fi:
+					fi.write("none")
+
+	# deinit pin and free all resource
+	@dbus.service.method(DBUS_BUS_NAME)
+	def deinit(self):
+		with open("/sys/class/gpio/unexport", 'w') as fi:
+			fi.write(self.m_port)
+		if self.m_poll_flag:
+			self.m_poll_flag = False
+			self.m_poll_thread.join()
+
+	# set pin state
+	@dbus.service.method(DBUS_BUS_NAME)
+	def set_value(self, value):
+		if value == "1":
+			with open(self.m_gpio_port_path_value, "w") as fi:
+				fi.write("1")
+		else:
+			with open(self.m_gpio_port_path_value, "w") as fi:
+				fi.write("0")
+
+	# set pin state to high
+	@dbus.service.method(DBUS_BUS_NAME)
+	def set(self):
+		with open(self.m_gpio_port_path_value, "w") as fi:
+			fi.write("1")
+
+	# set pin state to low
+	@dbus.service.method(DBUS_BUS_NAME)
+	def clear(self):
+		with open(self.m_gpio_port_path_value, "w") as fi:
+			fi.write("0")
+
+	# get pin state
+	@dbus.service.method(DBUS_BUS_NAME)
+	def get(self):
+		with open(self.m_gpio_port_path_value, "r") as fi:
+			return fi.read(1)
+
+	# toggle pin state
+	@dbus.service.method(DBUS_BUS_NAME)
+	def toggle(self):
+		if self.get() == "0":
+			self.set()
+		else:
+			self.clear()
+
+class GPIOService(dbus.service.Object):
+	def __init__(self, pin_map):
+		self.m_pin_map = pin_map
+		bus_name = dbus.service.BusName(DBUS_BUS_NAME, dbus.SystemBus())
+		dbus.service.Object.__init__(self, bus_name, DBUS_BUS_PATH)
+	
+	# return list of GPIO pins
+	@dbus.service.method(DBUS_BUS_NAME)
+	def ls(self):
+		return list(self.m_pin_map.keys())
+	
+def main():
+	# get device and it pin map
+	# probably this is not the best place to check hardware model
+	with open("/sys/firmware/devicetree/base/model", 'r') as fi:
+		yamplpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../etc/gpio.yaml")
+		pin_map = yaml.load(open(yamplpath))[str(fi.read()).rstrip("\0")]
+	# init d-bus
+	DBusGMainLoop(set_as_default=True)
+	# create root element
+	gpio_root_service = GPIOService(pin_map)
+	# create child elements
+	pin_services = dict()
+	for pin, port in pin_map.items():
+    		pin_services[pin] = GPIOPinService(pin, str(port))
+	# start mainloop
+	GObject.MainLoop().run()
+
+if __name__ == "__main__":
+	main()

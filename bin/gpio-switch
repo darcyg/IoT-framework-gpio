@@ -1,0 +1,73 @@
+#!/usr/bin/python3
+
+#Python GPIO to DBUS simple client switch
+
+import dbus
+import time
+import sys
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GObject
+
+DBUS_BUS_NAME = "com.devicehive"
+
+def update_state():
+	global leds
+	global state
+	for x in range(0, 8):
+		if x == state:
+			leds[x].clear();
+		else:
+			leds[x].set();
+
+def right_click(port, value):
+	global state
+	if value == "0":
+		return
+	if state == 7:
+		state = 0
+	else:
+		state += 1
+	update_state()
+
+def left_click(port, value):
+	global state
+	if value == "0":
+		return
+	if state == 0:
+		state = 7
+	else:
+		state -= 1
+	update_state()
+
+def get_pin(pin, mode):
+	bus = dbus.SystemBus()
+	obj = bus.get_object(DBUS_BUS_NAME, "/gpio/{}".format(pin))
+	pin = dbus.Interface(obj, DBUS_BUS_NAME)
+	pin.init(mode)
+	return pin
+
+def main():
+	global leds
+	global state
+	DBusGMainLoop(set_as_default=True)
+	
+	button_1 = get_pin("PIN7", "both")
+	button_1.connect_to_signal("pin_value_changed", left_click)
+	button_2 = get_pin("PIN8", "both")
+	button_2.connect_to_signal("pin_value_changed", right_click)
+
+	leds = list()
+	state = 0
+	for x in range(0, 8):
+		leds.append(get_pin("PIN{}".format(9+x), "out"))
+	update_state()
+	try:
+		GObject.MainLoop().run()
+	except KeyboardInterrupt:
+		for led in leds:
+			led.deinit()
+		button_1.deinit()
+		button_2.deinit()
+
+if __name__ == "__main__":
+	main()
