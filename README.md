@@ -3,7 +3,7 @@ GPIO snap for DeviceHive framework and examples.
 
 ### How to Build
 ```bash
-snappy build .
+snappy build src
 ```
 
 
