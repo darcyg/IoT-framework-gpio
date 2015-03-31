@@ -1,0 +1,20 @@
+#!/usr/bin/python3
+
+import dbus
+
+def main():
+	info = dbus.SystemBus().get_object('com.devicehive.gpio', '/info')
+	control = dbus.SystemBus().get_object('com.devicehive.gpio', '/control')
+	control.clear()
+	print("Before ", [ str(x) for x in info.ls() ])
+	control.add("button", 999)
+	print("After adding ", [ str(x) for x in info.ls() ])
+	control.rm("button")
+	print("After removing ", [ str(x) for x in info.ls() ])
+	control.add("button", 999)
+	print("After adding ", [ str(x) for x in info.ls() ])
+	control.rm("button")
+	print("After removing ", [ str(x) for x in info.ls() ])
+
+if __name__ == "__main__":
+	main()

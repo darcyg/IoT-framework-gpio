@@ -8,40 +8,28 @@ import sys
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GObject
 
-DBUS_BUS_NAME = "com.devicehive"
+BUS_NAME = "com.devicehive.gpio"
 
 def pin_value_changed(port, value):
 	global pin_out
 	print("pin_value_changed port: {} value: {}".format(port, value))
 	pin_out.set_value(str(int(value)^1))
 
-def get_pin(pin, mode):
-	bus = dbus.SystemBus()
-	obj = bus.get_object(DBUS_BUS_NAME, "/gpio/{}".format(pin))
-	pin = dbus.Interface(obj, DBUS_BUS_NAME)
-	pin.init(mode)
-	return pin
-
-def get_gpio():
-	bus = dbus.SystemBus()
-	obj = bus.get_object(DBUS_BUS_NAME, "/gpio")
-	return dbus.Interface(obj, DBUS_BUS_NAME)
-
-
 def main():
 	global pin_out
 	if len(sys.argv) < 3:
-		print("Choose in and out pins: ", [ str(x) for x in  get_gpio().ls() ])
+		print("Choose one of this port: ", [ str(x) for x in 
+			dbus.SystemBus().get_object(BUS_NAME, "/info").ls() ])
 		return
-
-	inport = sys.argv[1]
-	outport = sys.argv[2]
 
 	DBusGMainLoop(set_as_default=True)
 
-	pin_in = get_pin(inport, "both")
+	pin_in = dbus.SystemBus().get_object(BUS_NAME, "/{}".format(sys.argv[1]))
+	pin_in.init("both")
 	pin_in.connect_to_signal("pin_value_changed", pin_value_changed)
-	pin_out = get_pin(outport, "out")
+
+	pin_out = dbus.SystemBus().get_object(BUS_NAME, "/{}".format(sys.argv[2]))
+	pin_out.init("out")
 
 	try:
 		GObject.MainLoop().run()
