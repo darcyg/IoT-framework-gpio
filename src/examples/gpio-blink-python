@@ -6,16 +6,15 @@ import dbus
 import time
 import sys
 
-BUS_NAME = "com.devicehive.gpio"
-
-
 def main():
     if len(sys.argv) < 2:
         print("Choose one of this port: ", [str(x) for x in
-                                            dbus.SystemBus().get_object(BUS_NAME, "/info").ls()])
+            dbus.SystemBus().get_object("com.devicehive.gpio.Info", 
+            "/com/devicehive/gpio/Info").ls()])
         return
     for i in range(1, len(sys.argv)):
-        pin = dbus.SystemBus().get_object(BUS_NAME, "/{}".format(sys.argv[i]))
+        pin = dbus.SystemBus().get_object("com.devicehive.gpio.GpioPin",
+            "/com/devicehive/gpio/{}".format(sys.argv[i]))
         pin.init("out")
         for _x in range(0, 5):
             pin.set()

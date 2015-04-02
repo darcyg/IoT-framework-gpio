@@ -8,9 +8,6 @@ import os
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GObject
 
-BUS_NAME = "com.devicehive.gpio"
-
-
 def update_state():
     global leds
     global state
@@ -44,13 +41,15 @@ def left_click(port, value):
 
 
 def get_led(led_pin):
-    led = dbus.SystemBus().get_object(BUS_NAME, "/" + led_pin)
+    led = dbus.SystemBus().get_object("com.devicehive.gpio.GpioPin",
+        "/com/devicehive/gpio/{}".format(led_pin))
     led.init("out")
     return led
 
 
 def get_button(button_pin, cb):
-    button = dbus.SystemBus().get_object(BUS_NAME, "/" + button_pin)
+    button = dbus.SystemBus().get_object("com.devicehive.gpio.GpioPin",
+        "/com/devicehive/gpio/{}".format(button_pin))
     button.init("both")
     button.connect_to_signal("pin_value_changed", cb)
     return button
@@ -62,7 +61,8 @@ def main():
     DBusGMainLoop(set_as_default=True)
 
     pdir = os.path.realpath(__file__) + "-profiles"
-    control = dbus.SystemBus().get_object(BUS_NAME, "/control")
+    control = dbus.SystemBus().get_object("com.devicehive.gpio.Control",
+        "/com/devicehive/gpio/Control")
     control.clear()
     control.load_profile_for_board(pdir)
 

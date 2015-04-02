@@ -12,23 +12,25 @@ import sys
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GObject
 
-DBUS_BUS_NAME = "com.devicehive.gpio"
+DBUS_PIN_SERVICE_INTERFACE = "com.devicehive.gpio.GpioPin"
+DBUS_INFO_INTERFACE = "com.devicehive.gpio.Info"
+DBUS_CONTROL_INTERFACE = "com.devicehive.gpio.Control"
 
 
 class GPIOPinService(dbus.service.Object):
     def __init__(self, pin, port):
-        self.m_service_path = "/{}".format(pin)
+        self.m_service_path = "/com/devicehive/gpio/{}".format(pin)
         self.m_port = port
         self.m_poll_thread = None
         self.m_poll_flag = False
         self.m_pin = pin
         self.m_gpio_port_path = "/sys/class/gpio/gpio{}".format(self.m_port)
         self.m_gpio_port_path_value = os.path.join(self.m_gpio_port_path, "value")
-        bus_name = dbus.service.BusName(DBUS_BUS_NAME, dbus.SystemBus())
+        bus_name = dbus.service.BusName(DBUS_PIN_SERVICE_INTERFACE, dbus.SystemBus())
         dbus.service.Object.__init__(self, bus_name, self.m_service_path)
 
     # send when pin state changed
-    @dbus.service.signal(DBUS_BUS_NAME)
+    @dbus.service.signal(DBUS_PIN_SERVICE_INTERFACE)
     def pin_value_changed(self, port, value):
         pass
 
@@ -60,7 +62,7 @@ class GPIOPinService(dbus.service.Object):
         watcher.close()
 
     # init pin
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_PIN_SERVICE_INTERFACE)
     def init(self, mode):
         # mode can be out, in, rising, falling or both
         if os.path.isdir(self.m_gpio_port_path):
@@ -84,7 +86,7 @@ class GPIOPinService(dbus.service.Object):
                     fi.write("none")
 
     # deinit pin and free all resource
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_PIN_SERVICE_INTERFACE)
     def deinit(self):
         with open("/sys/class/gpio/unexport", 'w') as fi:
             fi.write(self.m_port)
@@ -93,7 +95,7 @@ class GPIOPinService(dbus.service.Object):
             self.m_poll_thread.join()
 
     # set pin state
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_PIN_SERVICE_INTERFACE)
     def set_value(self, value):
         if value == "1":
             with open(self.m_gpio_port_path_value, "w") as fi:
@@ -103,25 +105,25 @@ class GPIOPinService(dbus.service.Object):
                 fi.write("0")
 
     # set pin state to high
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_PIN_SERVICE_INTERFACE)
     def set(self):
         with open(self.m_gpio_port_path_value, "w") as fi:
             fi.write("1")
 
     # set pin state to low
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_PIN_SERVICE_INTERFACE)
     def clear(self):
         with open(self.m_gpio_port_path_value, "w") as fi:
             fi.write("0")
 
     # get pin state
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_PIN_SERVICE_INTERFACE)
     def get(self):
         with open(self.m_gpio_port_path_value, "r") as fi:
             return fi.read(1)
 
     # toggle pin state
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_PIN_SERVICE_INTERFACE)
     def toggle(self):
         if self.get() == "0":
             self.set()
@@ -132,11 +134,11 @@ class GPIOPinService(dbus.service.Object):
 class GPIOInfoService(dbus.service.Object):
     def __init__(self, pin_services):
         self.m_pin_services = pin_services
-        bus_name = dbus.service.BusName(DBUS_BUS_NAME, dbus.SystemBus())
-        dbus.service.Object.__init__(self, bus_name, "/info")
+        bus_name = dbus.service.BusName(DBUS_INFO_INTERFACE, dbus.SystemBus())
+        dbus.service.Object.__init__(self, bus_name, "/com/devicehive/gpio/Info")
 
     # return list of GPIO pins
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_INFO_INTERFACE)
     def ls(self):
         if not self.m_pin_services:
             return [""]
@@ -146,11 +148,11 @@ class GPIOInfoService(dbus.service.Object):
 class GPIOControlService(dbus.service.Object):
     def __init__(self, pin_services):
         self.m_pin_services = pin_services
-        bus_name = dbus.service.BusName(DBUS_BUS_NAME, dbus.SystemBus())
-        dbus.service.Object.__init__(self, bus_name, "/control")
+        bus_name = dbus.service.BusName(DBUS_CONTROL_INTERFACE, dbus.SystemBus())
+        dbus.service.Object.__init__(self, bus_name, "/com/devicehive/gpio/Control")
 
     # add pin
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_CONTROL_INTERFACE)
     def add(self, pin, port):
         for servicepin, service in self.m_pin_services.items():
             if service.m_port == port:
@@ -162,7 +164,7 @@ class GPIOControlService(dbus.service.Object):
         print("Create pin: {} for port: {}".format(pin, port))
 
     # rm pin
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_CONTROL_INTERFACE)
     def rm(self, pin):
         print("Remove pin: {} for port: {}".format(pin,
                                                    self.m_pin_services[pin].m_port))
@@ -175,7 +177,7 @@ class GPIOControlService(dbus.service.Object):
         del self.m_pin_services[pin]
 
     # load profile
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_CONTROL_INTERFACE)
     def load_profile(self, yamlpath):
         print("Loading profile {}".format(yamlpath))
         with open(yamlpath) as yf:
@@ -189,7 +191,7 @@ class GPIOControlService(dbus.service.Object):
             self.add(pin, port)
 
     # load profile for current board from profiles directory
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_CONTROL_INTERFACE)
     def load_profile_for_board(self, yamldirpath):
         try:
             with open("/sys/firmware/devicetree/base/model", 'r') as hwid:
@@ -205,7 +207,7 @@ class GPIOControlService(dbus.service.Object):
             raise FileNotFoundError("Profile file for {} not found.".format(model))
 
     # clear all
-    @dbus.service.method(DBUS_BUS_NAME)
+    @dbus.service.method(DBUS_CONTROL_INTERFACE)
     def clear(self):
         while self.m_pin_services:
             self.rm(list(self.m_pin_services.keys())[0])

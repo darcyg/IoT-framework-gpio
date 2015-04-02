@@ -1,8 +1,8 @@
 # DeviceHive GPIO DBus Spec
 
-### Interface com.devicehive.gpio
-Bus Name: `com.devicehive.gpio`
-Path: `/info`
+### Interface com.devicehive.gpio.Info
+Bus Name: `com.devicehive.gpio.Info`
+Path: `/com/devicehive/gpio/Info`
 
 #### Methods:
 `ls()` - returns list of available gpio pins
@@ -17,7 +17,7 @@ Path: `/info`
       <arg direction="out" type="s" />
     </method>
   </interface>
-  <interface name="com.devicehive.gpio">
+  <interface name="com.devicehive.gpio.Info">
     <method name="ls">
     </method>
   </interface>
@@ -25,9 +25,9 @@ Path: `/info`
 ```
 
 
-### Interface com.devicehive.gpio
-Bus Name: `com.devicehive.gpio`
-Path: `/XYZ`
+### Interface com.devicehive.gpio.GpioService
+Bus Name: `com.devicehive.gpio.GpioService`
+Path: `/com/devicehive/gpio/XYZ`
 
 #### Methods:
 `init(direction)` - initialize pin for input `in` or output `out`
@@ -55,7 +55,7 @@ Path: `/XYZ`
       <arg direction="out" type="s" />
     </method>
   </interface>
-  <interface name="com.devicehive.gpio">
+  <interface name="com.devicehive.gpio.GpioService">
     <method name="init">
 	    <arg direction="in"  type="v" name="mode" />
     </method>
@@ -77,9 +77,9 @@ Path: `/XYZ`
 </node>
 ```
 
-### Interface com.devicehive.gpio
-Bus Name: `com.devicehive.gpio`
-Path: `/control`
+### Interface com.devicehive.gpio.Control
+Bus Name: `com.devicehive.gpio.Control`
+Path: `com/devicehive/gpio/Control`
 
 #### Methods:
 `add(pin, port)` - Register pin to expose a physical port
