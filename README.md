@@ -1,6 +1,8 @@
 # DeviceHive GPIO framework
 DeviceHive GPIO framework and usage examples.
 
+> DBus Spec can be found [here](DBUS-SPEC)
+
 ### Running
 Run
 daemon/gpio-daemon <file with profile>  
