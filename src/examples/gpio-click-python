@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-#Python GPIO to DBUS simple client switch
+# Python GPIO to DBUS simple client switch
 
 import dbus
 import time
@@ -10,33 +10,36 @@ from gi.repository import GObject
 
 BUS_NAME = "com.devicehive.gpio"
 
+
 def pin_value_changed(port, value):
-	global pin_out
-	print("pin_value_changed port: {} value: {}".format(port, value))
-	pin_out.set_value(str(int(value)^1))
+    global pin_out
+    print("pin_value_changed port: {} value: {}".format(port, value))
+    pin_out.set_value(str(int(value) ^ 1))
+
 
 def main():
-	global pin_out
-	if len(sys.argv) < 3:
-		print("Choose one of this port: ", [ str(x) for x in 
-			dbus.SystemBus().get_object(BUS_NAME, "/info").ls() ])
-		return
+    global pin_out
+    if len(sys.argv) < 3:
+        print("Choose one of this port: ", [str(x) for x in
+                                            dbus.SystemBus().get_object(BUS_NAME, "/info").ls()])
+        return
 
-	DBusGMainLoop(set_as_default=True)
+    DBusGMainLoop(set_as_default=True)
 
-	pin_in = dbus.SystemBus().get_object(BUS_NAME, "/{}".format(sys.argv[1]))
-	pin_in.init("both")
-	pin_in.connect_to_signal("pin_value_changed", pin_value_changed)
+    pin_in = dbus.SystemBus().get_object(BUS_NAME, "/{}".format(sys.argv[1]))
+    pin_in.init("both")
+    pin_in.connect_to_signal("pin_value_changed", pin_value_changed)
 
-	pin_out = dbus.SystemBus().get_object(BUS_NAME, "/{}".format(sys.argv[2]))
-	pin_out.init("out")
+    pin_out = dbus.SystemBus().get_object(BUS_NAME, "/{}".format(sys.argv[2]))
+    pin_out.init("out")
 
-	try:
-		GObject.MainLoop().run()
-	except KeyboardInterrupt:
-		pass
-	pin_in.deinit()
-	pin_out.deinit()
+    try:
+        GObject.MainLoop().run()
+    except KeyboardInterrupt:
+        pass
+    pin_in.deinit()
+    pin_out.deinit()
+
 
 if __name__ == "__main__":
-	main()
+    main()

@@ -1,81 +1,87 @@
 #!/usr/bin/python3
 
-#Python GPIO to DBUS simple client switch
+# Python GPIO to DBUS simple client switch
 
 import dbus
-import time
-import sys
+
 import os
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GObject
 
 BUS_NAME = "com.devicehive.gpio"
 
+
 def update_state():
-	global leds
-	global state
-	for x in range(0, 8):
-		if x == state:
-			leds[x].clear();
-		else:
-			leds[x].set();
+    global leds
+    global state
+    for x in range(0, 8):
+        if x == state:
+            leds[x].clear();
+        else:
+            leds[x].set();
+
 
 def right_click(port, value):
-	global state
-	if value == "0":
-		return
-	if state == 7:
-		state = 0
-	else:
-		state += 1
-	update_state()
+    global state
+    if value == "0":
+        return
+    if state == 7:
+        state = 0
+    else:
+        state += 1
+    update_state()
+
 
 def left_click(port, value):
-	global state
-	if value == "0":
-		return
-	if state == 0:
-		state = 7
-	else:
-		state -= 1
-	update_state()
+    global state
+    if value == "0":
+        return
+    if state == 0:
+        state = 7
+    else:
+        state -= 1
+    update_state()
+
 
 def get_led(led_pin):
-	led = dbus.SystemBus().get_object(BUS_NAME, "/" + led_pin)
-	led.init("out")
-	return led
+    led = dbus.SystemBus().get_object(BUS_NAME, "/" + led_pin)
+    led.init("out")
+    return led
+
 
 def get_button(button_pin, cb):
-	button = dbus.SystemBus().get_object(BUS_NAME, "/" + button_pin)
-	button.init("both")
-	button.connect_to_signal("pin_value_changed", cb)
-	return button
+    button = dbus.SystemBus().get_object(BUS_NAME, "/" + button_pin)
+    button.init("both")
+    button.connect_to_signal("pin_value_changed", cb)
+    return button
+
 
 def main():
-	global leds
-	global state
-	DBusGMainLoop(set_as_default=True)
-	
-	pdir =os.path.realpath(__file__) + "-profiles"
-	control = dbus.SystemBus().get_object(BUS_NAME, "/control")
-	control.clear()
-	control.load_profile_for_board(pdir)
+    global leds
+    global state
+    DBusGMainLoop(set_as_default=True)
 
-	button_1 = get_button("BUTTON1", left_click)
-	button_2 = get_button("BUTTON2", right_click)
+    pdir = os.path.realpath(__file__) + "-profiles"
+    control = dbus.SystemBus().get_object(BUS_NAME, "/control")
+    control.clear()
+    control.load_profile_for_board(pdir)
 
-	leds = list()
-	state = 0
-	for x in range(1, 9):
-		leds.append(get_led("LED{}".format(x)))
-	update_state()
-	try:
-		GObject.MainLoop().run()
-	except KeyboardInterrupt:
-		for led in leds:
-			led.deinit()
-		button_1.deinit()
-		button_2.deinit()
+    button_1 = get_button("BUTTON1", left_click)
+    button_2 = get_button("BUTTON2", right_click)
+
+    leds = list()
+    state = 0
+    for x in range(1, 9):
+        leds.append(get_led("LED{}".format(x)))
+    update_state()
+    try:
+        GObject.MainLoop().run()
+    except KeyboardInterrupt:
+        for led in leds:
+            led.deinit()
+        button_1.deinit()
+        button_2.deinit()
+
 
 if __name__ == "__main__":
-	main()
+    main()
