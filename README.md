@@ -1,7 +1,7 @@
 # DeviceHive GPIO framework
 DeviceHive GPIO framework and usage examples.
 
-> DBus Spec can be found [here](DBUS-SPEC)
+> DBus Spec can be found [here](DBUS-SPEC.md)
 
 ### Running
 Run
