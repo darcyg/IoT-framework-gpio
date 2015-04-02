@@ -103,7 +103,7 @@ Path: `com/devicehive/gpio/Control`
       <arg direction="out" type="s" />
     </method>
   </interface>
-  <interface name="com.devicehive.gpio">
+  <interface name="com.devicehive.gpio.Control">
     <method name="load_profile_for_board">
       <arg direction="in"  type="v" name="yamldirpath" />
     </method>
