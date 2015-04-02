@@ -6,10 +6,15 @@ Path: `/com/devicehive/gpio`
 
 #### Methods:
 `list()` - returns list of available gpio pins
+
 `add(pin, port)` - Register pin to expose a physical port
+
 `rm(pin)` - Unregister exposed pin
+
 `clear()` - Unregister all exposed pins
+
 `load_profile(yamlpath)` - Register multiple pins from provided yaml file
+
 `load_profile_for_board(yamldirpath)` - Lookup for the pins yaml file with name from `/sys/firmware/devicetree/base/model` in provided directory. 
 
 
@@ -52,11 +57,17 @@ Path: `/com/devicehive/gpio/{PIN}`
 
 #### Methods:
 `init(direction)` - initialize pin for input `in` or output `out`
+
 `deinit()` - deinitialize pin and free all resource
+
 `set_value(value)` - set pin state, where value is ether `0` or `1`
+
 `set()` - set pin state to `1`
+
 `clear()` - set pin state to `0`
+
 `get()` - read pin state
+
 `toggle()` - toggle pin state from `0` to `1` or from `1` to `0`
 
 
