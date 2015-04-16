@@ -11,7 +11,7 @@ from gi.repository import GObject
 def pin_value_changed(port, value):
     global pin_out
     print("pin_value_changed port: {} value: {}".format(port, value))
-    pin_out.set_value(str(int(value) ^ 1))
+    pin_out.set_value(str(int(value) ^ 1), dbus_interface='com.devicehive.gpio.GpioPin')
 
 
 def main():
@@ -19,26 +19,27 @@ def main():
     if len(sys.argv) < 3:
         print("Choose one of this port: ", [str(x) for x in
             dbus.SystemBus().get_object("com.devicehive.gpio.Info", 
-            "/com/devicehive/gpio/Info").ls()])
+                "/com/devicehive/gpio/Info").ls(
+                dbus_interface='com.devicehive.gpio.Info')])
         return
 
     DBusGMainLoop(set_as_default=True)
 
     pin_in = dbus.SystemBus().get_object("com.devicehive.gpio.GpioPin",
         "/com/devicehive/gpio/{}".format(sys.argv[1]))
-    pin_in.init("both")
+    pin_in.init("both", dbus_interface='com.devicehive.gpio.GpioPin')
     pin_in.connect_to_signal("pin_value_changed", pin_value_changed)
 
     pin_out = dbus.SystemBus().get_object("com.devicehive.gpio.GpioPin",
         "/com/devicehive/gpio/{}".format(sys.argv[2]))
-    pin_out.init("out")
+    pin_out.init("out", dbus_interface='com.devicehive.gpio.GpioPin')
 
     try:
         GObject.MainLoop().run()
     except KeyboardInterrupt:
         pass
-    pin_in.deinit()
-    pin_out.deinit()
+    pin_in.deinit(dbus_interface='com.devicehive.gpio.GpioPin')
+    pin_out.deinit(dbus_interface='com.devicehive.gpio.GpioPin')
 
 
 if __name__ == "__main__":

@@ -13,9 +13,9 @@ def update_state():
     global state
     for x in range(0, 8):
         if x == state:
-            leds[x].clear();
+            leds[x].clear(dbus_interface='com.devicehive.gpio.GpioPin');
         else:
-            leds[x].set();
+            leds[x].set(dbus_interface='com.devicehive.gpio.GpioPin');
 
 
 def right_click(port, value):
@@ -43,14 +43,14 @@ def left_click(port, value):
 def get_led(led_pin):
     led = dbus.SystemBus().get_object("com.devicehive.gpio.GpioPin",
         "/com/devicehive/gpio/{}".format(led_pin))
-    led.init("out")
+    led.init("out", dbus_interface='com.devicehive.gpio.GpioPin')
     return led
 
 
 def get_button(button_pin, cb):
     button = dbus.SystemBus().get_object("com.devicehive.gpio.GpioPin",
         "/com/devicehive/gpio/{}".format(button_pin))
-    button.init("both")
+    button.init("both", dbus_interface='com.devicehive.gpio.GpioPin')
     button.connect_to_signal("pin_value_changed", cb)
     return button
 
@@ -63,8 +63,9 @@ def main():
     pdir = os.path.realpath(__file__) + "-profiles"
     control = dbus.SystemBus().get_object("com.devicehive.gpio.Control",
         "/com/devicehive/gpio/Control")
-    control.clear()
-    control.load_profile_for_board(pdir)
+    control.clear(dbus_interface='com.devicehive.gpio.Control')
+    control.load_profile_for_board(pdir,
+        dbus_interface='com.devicehive.gpio.Control')
 
     button_1 = get_button("BUTTON1", left_click)
     button_2 = get_button("BUTTON2", right_click)
@@ -79,8 +80,8 @@ def main():
     except KeyboardInterrupt:
         for led in leds:
             led.deinit()
-        button_1.deinit()
-        button_2.deinit()
+        button_1.deinit(dbus_interface='com.devicehive.gpio.GpioPin')
+        button_2.deinit(dbus_interface='com.devicehive.gpio.GpioPin')
 
 
 if __name__ == "__main__":
