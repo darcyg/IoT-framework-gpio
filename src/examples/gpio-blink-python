@@ -22,7 +22,6 @@ def main():
             time.sleep(0.05)
             pin.clear(dbus_interface='com.devicehive.gpio.GpioPin')
             time.sleep(0.1)
-            print("test")
         pin.deinit(dbus_interface='com.devicehive.gpio.GpioPin')
 
 
